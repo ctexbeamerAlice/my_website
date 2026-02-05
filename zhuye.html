@@ -1,0 +1,1330 @@
+<style>
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 页面主容器：个人主页整体的背景、主题色变量、排版基础等 */
+#profile-container {
+  /* ========= CSS 变量（主题系统）=========
+     这些变量用于统一控制配色/圆角/阴影等，后续用 var(--xxx) 引用即可
+  */
+  --bg: #050712;                         /* 背景主色：深蓝黑底 */
+  --card: rgba(15, 23, 42, 0.96);        /* 卡片背景：深色半透明（更“玻璃”） */
+  --card-soft: rgba(15, 23, 42, 0.90);   /* 更柔和的卡片背景：透明度更高 */
+  --accent: #7b5cff;                     /* 主强调色：紫色 */
+  --accent-2: #00e0ff;                   /* 辅助强调色：青蓝 */
+  --accent-3: #ff2d92;                   /* 辅助强调色：粉 */
+  --gold: #fbbf24;                       /* 金色：用于高亮、奖项文字等 */
+  --text-main: #f9fafb;                  /* 主文字颜色：接近白 */
+  --text-soft: #9ca3af;                  /* 次要文字颜色：灰（信息弱化） */
+  --border-soft: rgba(148, 163, 184, 0.45); /* 柔和边框：灰蓝半透明 */
+  --radius-xl: 22px;                     /* 超大圆角：用于大容器 */
+  --radius-lg: 18px;                     /* 大圆角：用于卡片等 */
+  --shadow-soft: 0 24px 60px rgba(15, 23, 42, 0.95); /* 大面积柔和阴影，提升层次 */
+
+  /* 默认文字色：整个容器内的文字默认使用主文字色 */
+  color: var(--text-main);
+
+  /* 背景：两层径向渐变光晕 + 底色
+     - radial-gradient(circle at top left, ...): 左上角紫色光
+     - radial-gradient(circle at bottom right, ...): 右下角蓝绿光
+     - var(--bg): 最底层纯色背景
+  */
+  background:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.42), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.32), transparent 55%),
+    var(--bg);
+
+  padding: 32px 18px 46px; /* 内边距：上 32 / 左右 18 / 下 46，留呼吸空间 */
+  position: relative;      /* 建立定位上下文：给绝对定位的 .orb 作为参照 */
+  overflow: hidden;        /* 隐藏溢出：光球动画移动时不露出容器外 */
+  min-height: 100vh;       /* 最小高度铺满视口：页面至少满屏 */
+}
+
+/* ===========================
+   背景光球（orb）
+   =========================== */
+
+/* .orb：所有光球的公共基础样式 */
+.orb {
+  position: absolute;      /* 绝对定位：相对 #profile-container 定位 */
+  border-radius: 999px;    /* 极大圆角：确保是圆形/椭圆形 */
+  filter: blur(36px);      /* 模糊：制造发光、柔和扩散效果 */
+  mix-blend-mode: screen;  /* 混合模式：screen 让亮色叠加更“发光” */
+  pointer-events: none;    /* 不响应鼠标事件：避免遮挡点击 */
+  opacity: 0.9;            /* 透明度：整体强度 */
+  z-index: 0;              /* 放在底层：内容区域会更上层 */
+}
+
+/* orb-1：右上角紫色光球 */
+.orb-1 {
+  width: 240px;            /* 光球宽 */
+  height: 240px;           /* 光球高（=宽 -> 圆形） */
+  background: #7b5cff;     /* 紫色 */
+  top: -70px;              /* 上移：让光球部分在容器外，形成氛围 */
+  right: -40px;            /* 右移：同上 */
+  animation: orbit-1 26s linear infinite alternate;
+  /* 动画：
+     - orbit-1：关键帧名称
+     - 26s：周期
+     - linear：匀速
+     - infinite：无限循环
+     - alternate：来回往返（避免瞬间跳回起点）
+  */
+}
+
+/* orb-2：左下角青色光球 */
+.orb-2 {
+  width: 220px;
+  height: 220px;
+  background: #00e0ff;     /* 青蓝色 */
+  bottom: -60px;           /* 下移出界 */
+  left: -60px;             /* 左移出界 */
+  animation: orbit-2 30s linear infinite alternate; /* 更慢的漂移 */
+}
+
+/* orb-3：中部粉色呼吸光球 */
+.orb-3 {
+  width: 180px;
+  height: 180px;
+  background: #ff2d92;     /* 粉色 */
+  top: 40%;                /* 垂直位置在容器 40% 附近 */
+  left: 50%;               /* 水平居中 */
+  transform: translateX(-50%); /* 把自身宽度的一半拉回，实现真正居中 */
+  opacity: 0.45;           /* 更淡，作为背景点缀 */
+  animation: pulse 18s ease-in-out infinite; /* 呼吸/脉冲动画 */
+}
+
+/* ========== 关键帧动画定义 ========== */
+
+/* orbit-1：轻微位移 + 旋转（营造漂浮感） */
+@keyframes orbit-1 {
+  from { transform: translate3d(0,0,0) rotate(0deg); }
+  /* translate3d：GPU 加速位移（更顺滑）
+     rotate：轻微旋转让光球更有生命感
+  */
+  to   { transform: translate3d(-42px, 24px, 0) rotate(18deg); }
+}
+
+/* orbit-2：方向相反的位移 + 旋转 */
+@keyframes orbit-2 {
+  from { transform: translate3d(0,0,0) rotate(0deg); }
+  to   { transform: translate3d(26px, -18px, 0) rotate(-22deg); }
+}
+
+/* pulse：缩放 + 透明度变化（呼吸灯效果） */
+@keyframes pulse {
+  /* 0% 和 100%：起点/终点一致 -> 动画循环不会跳变 */
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.32; }
+  /* 50%：中间放大并更亮 */
+  50%      { transform: translateX(-50%) scale(1.25); opacity: 0.6; }
+}
+
+/* ===========================
+   内层布局容器
+   =========================== */
+.inner {
+  position: relative; /* 让内部元素也可相对定位 */
+  z-index: 1;         /* 提升层级：压过背景光球（orb 的 z-index:0） */
+  max-width: 1200px;  /* 最大宽度：控制内容不在大屏过宽 */
+  margin: 0 auto;     /* 水平居中 */
+}
+
+/* ===========================
+   滚动动画（进入视口渐显上移）
+   =========================== */
+.animate {
+  opacity: 0; /* 初始隐藏：等进入视口再加 .visible 播放动画 */
+}
+
+/* .visible：元素进入视口后添加该类触发 fade-up 动画 */
+.visible {
+  animation: fade-up 0.85s cubic-bezier(0.21, 0.86, 0.38, 0.98) both;
+  /* 0.85s：时长
+     cubic-bezier：更自然的缓动
+     both：动画结束后保留最后一帧（防止回到初始状态）
+  */
+}
+
+/* fade-up：从下往上、轻微缩放、带一点模糊过渡到清晰 */
+@keyframes fade-up {
+  from {
+    opacity: 0;                     /* 透明 */
+    transform: translateY(26px) scale(0.985); /* 下移 + 轻微缩小 */
+    filter: blur(2px);              /* 轻微模糊，增强动效质感 */
+  }
+  to {
+    opacity: 1;                     /* 完全可见 */
+    transform: translateY(0) scale(1); /* 回到原位原尺寸 */
+    filter: blur(0);                /* 清晰 */
+  }
+}
+
+/* ===========================
+   头部区域（Hero/Header）
+   =========================== */
+.header {
+  /* 背景：同样用径向渐变叠加卡片底色，让顶部更“聚焦” */
+  background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.32), transparent 55%),
+              radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.22), transparent 50%),
+              var(--card);
+
+  border-radius: var(--radius-xl); /* 大圆角 */
+  padding: 40px 32px;              /* 内边距：空间更大，突出头部 */
+  box-shadow: var(--shadow-soft);  /* 深色柔和大阴影 */
+  border: 1px solid rgba(148, 163, 184, 0.45); /* 细边框，玻璃拟态 */
+  position: relative;              /* 给 .header-banner 绝对定位参照 */
+  overflow: hidden;                /* 隐藏 banner 渐变可能溢出 */
+  margin-bottom: 40px;             /* 与后面内容拉开距离 */
+  text-align: center;              /* 头部内容居中 */
+}
+
+/* 头部覆盖层：一层斜向渐变，用混合模式柔光叠加 */
+.header-banner {
+  position: absolute; /* 覆盖整个 header */
+  inset: 0;           /* top/right/bottom/left 全为 0 */
+  background-image: linear-gradient(
+    120deg, /* 斜向渐变角度 */
+    rgba(123, 92, 255, 0.22),
+    rgba(34, 197, 235, 0.16),
+    rgba(244, 114, 182, 0.16)
+  );
+  mix-blend-mode: soft-light; /* 柔光混合：更柔和的光影叠加 */
+  opacity: 0.9;               /* 透明度控制覆盖层强度 */
+  pointer-events: none;       /* 不影响交互 */
+}
+
+/* 头部内容：提高层级以盖过 banner */
+.header-content {
+  position: relative;
+  z-index: 1;
+}
+
+.header .subtitle {
+  text-align: center;
+}
+
+/* 主姓名标题 */
+.name {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  /* clamp(min, preferred, max)
+     - 最小 2.5rem
+     - 随视口变化用 5vw
+     - 最大 3.5rem
+     => 响应式大标题，不会过大或过小
+  */
+  line-height: 1.1;         /* 行高紧凑，让大标题更有冲击力 */
+  margin-bottom: 12px;      /* 与副标题间距 */
+  letter-spacing: 0.03em;   /* 字距：更“高级”的排版感 */
+}
+
+/* 中文名颜色（纯白） */
+.name-cn {
+  color: white;
+  margin-right: 16px; /* 中英名字之间留间距 */
+}
+
+/* 英文名渐变文字效果 */
+.name-en {
+  background: linear-gradient(120deg, #22d3ee, #4ade80, #f97316); /* 渐变色 */
+  -webkit-background-clip: text; /* WebKit：让背景裁剪到文字形状 */
+  background-clip: text;         /* 标准属性：同上 */
+  color: transparent;            /* 文字透明，显示背景渐变 */
+}
+
+/* 副标题/简介 */
+.subtitle {
+  color: var(--text-soft);     /* 次要文字色 */
+  font-size: 1.1rem;           /* 稍大一点的正文 */
+  max-width: 800px;            /* 控制行长，避免太宽难读 */
+  margin: 0 auto 20px;         /* 居中 + 下间距 20px */
+  line-height: 1.6;            /* 更舒适的阅读行高 */
+  text-align: center;          /* 让这段文字居中 */
+}
+
+/* 联系方式区域：flex 自动换行居中 */
+.contact-info {
+  display: flex;                /* 横向排列 */
+  justify-content: center;      /* 水平居中 */
+  flex-wrap: wrap;              /* 多行换行 */
+  gap: 20px;                    /* 项目间距 */
+  margin-top: 20px;             /* 与上方内容间距 */
+  font-size: 0.9rem;            /* 字体略小 */
+  color: var(--text-soft);      /* 次要文字色 */
+}
+
+/* 每个联系方式项：图标 + 文本对齐 */
+.contact-item {
+  display: flex;
+  align-items: center; /* 垂直居中对齐 */
+  gap: 6px;            /* 图标和文字间距 */
+}
+
+/* ===========================
+   标签（Tag/Pill）
+   =========================== */
+.tags {
+  display: flex;           /* 标签横向排列 */
+  flex-wrap: wrap;         /* 超出自动换行 */
+  gap: 10px;               /* 标签间距 */
+  margin-top: 24px;        /* 与上方间距 */
+  justify-content: center; /* 整体居中 */
+}
+
+/* 单个标签样式：胶囊形状 + 玻璃背景 */
+.tag {
+  font-size: 0.85rem; /* 小字 */
+  padding: 6px 12px;  /* 胶囊内边距 */
+  border-radius: 999px; /* 胶囊圆角 */
+  border: 1px solid rgba(148, 163, 184, 0.55); /* 边框 */
+  background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.22), transparent 55%),
+              rgba(15, 23, 42, 0.98); /* 光感叠加深色底 */
+  display: inline-flex;   /* 行内 flex，便于图标+文字 */
+  align-items: center;    /* 垂直居中 */
+  gap: 6px;               /* 图标和文字间距 */
+}
+
+/* 金色标签：强调/重点 */
+.tag-gold {
+  border-color: rgba(251, 191, 36, 0.7); /* 金色边框 */
+  background: radial-gradient(circle at top left, rgba(251, 191, 36, 0.2), transparent 55%),
+              rgba(15, 23, 42, 0.98);
+}
+
+/* ===========================
+   章节（Section）
+   =========================== */
+.section {
+  margin-bottom: 50px; /* 每个章节下方间距 */
+}
+
+.section-header {
+  margin-bottom: 24px; /* 标题区与内容区间距 */
+}
+
+/* 小标题标签（如 ABOUT / EXPERIENCE） */
+.section-label {
+  font-size: 0.85rem;        /* 小字 */
+  letter-spacing: 0.18em;    /* 增大字距：更像“标签” */
+  text-transform: uppercase; /* 强制大写（英文字母） */
+  color: #9ca3af;            /* 灰色 */
+  margin-bottom: 8px;
+}
+
+/* 章节大标题 */
+.section-title {
+  font-size: 2rem;        /* 大标题 */
+  letter-spacing: 0.04em; /* 微字距 */
+  color: white;
+  margin-bottom: 8px;
+}
+
+/* 标题中的 <span> 渐变文字强调 */
+.section-title span {
+  background: linear-gradient(120deg, #22d3ee, #4ade80, #f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===========================
+   网格布局
+   =========================== */
+.grid-2 {
+  display: grid;                         /* 使用 CSS Grid */
+  grid-template-columns: repeat(2, 1fr); /* 两列等宽 */
+  gap: 20px;                             /* 网格间距 */
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 三列等宽 */
+  gap: 18px;
+}
+
+/* 响应式：小屏（<=900px）改为单列，避免挤压 */
+@media (max-width: 900px) {
+  .grid-2, .grid-3 {
+    grid-template-columns: 1fr; /* 单列 */
+  }
+}
+
+/* ===========================
+   卡片（通用）
+   =========================== */
+.card {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.9));
+  /* 斜向渐变：让卡片更有立体感 */
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.9);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* transition：hover 时位移和阴影变化更顺滑 */
+}
+
+/* 悬停抬起 + 阴影增强 */
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.95);
+}
+
+/* 卡片头部：标题 + 右侧标签对齐 */
+.card-header {
+  display: flex;
+  align-items: flex-start;        /* 顶部对齐（适合多行标题） */
+  justify-content: space-between; /* 左右分散 */
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+/* 卡片标题 */
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  flex: 1; /* 占满剩余空间，避免右侧标签挤压 */
+}
+
+/* 右侧小标签 */
+.card-tag {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  color: #9ca3af;
+  white-space: nowrap; /* 不换行，保持胶囊完整 */
+}
+
+/* 卡片元信息（时间/地点等） */
+.card-meta {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  margin-bottom: 12px;
+}
+
+/* 卡片正文 */
+.card-content {
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+/* 卡片内列表：去掉默认圆点，改用自定义符号 */
+.card-content ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 8px 0 0;
+}
+
+/* 列表项：符号 + 文本 */
+.card-content li {
+  margin-top: 6px;
+  display: flex;
+  align-items: flex-start; /* 多行时顶部对齐 */
+  gap: 8px;
+}
+
+/* 列表项前的装饰符号 */
+.card-content li::before {
+  content: "◆";          /* 菱形 */
+  font-size: 0.6rem;
+  margin-top: 6px;        /* 与第一行文字视觉对齐 */
+  color: #22d3ee;         /* 青色点缀 */
+  flex-shrink: 0;         /* 防止被压缩 */
+}
+
+/* ===========================
+   信息框（Info Box）
+   =========================== */
+.info-box {
+  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.32), transparent 70%),
+              rgba(15, 23, 42, 0.96);
+  /* 蓝色光感 + 深色底 */
+  border: 1px solid rgba(59, 130, 246, 0.7); /* 蓝色边框 */
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+/* 信息行：左 label 右 value */
+.info-row {
+  display: flex;
+  justify-content: space-between; /* 两端对齐 */
+  align-items: center;            /* 垂直居中 */
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.info-row:last-child {
+  margin-bottom: 0; /* 最后一行去掉下间距 */
+}
+
+.info-label {
+  color: #bfdbfe;    /* 浅蓝 */
+  font-weight: 500;
+}
+
+.info-value {
+  color: azure;      /* 更亮一点的值 */
+  font-weight: 600;
+}
+
+.info-highlight {
+  color: #fbbf24;    /* 金色强调 */
+}
+
+/* ===========================
+   课程列表（Course List）
+   =========================== */
+.course-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  /* auto-fill + minmax：尽可能多列，每列最小 200px，空间足够就自动增列 */
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.course-item {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+}
+
+.course-name {
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.course-score {
+  color: #22d3ee;     /* 分数用青色强调 */
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* ===========================
+   竞赛表格（Competition Table）
+   =========================== */
+.competition-table {
+  width: 100%;              /* 占满容器宽度 */
+  border-collapse: separate;/* 分离边框，配合 border-spacing 做“卡片行” */
+  border-spacing: 0 10px;   /* 行与行之间留 10px 间距 */
+}
+
+/* 每一行（tr）视觉上像卡片 */
+.competition-row {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.9));
+  transition: all 0.3s ease; /* hover 时背景和位移平滑 */
+}
+
+/* 悬停：背景更亮 + 右移一点 */
+.competition-row:hover {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.98), rgba(30, 41, 59, 0.9));
+  transform: translateX(4px);
+}
+
+/* 单元格基础样式 */
+.competition-row td {
+  padding: 16px;
+  border-top: 1px solid rgba(148, 163, 184, 0.3);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+/* 第一列：左边框 + 左圆角 + 字体强调 */
+.competition-row td:first-child {
+  border-left: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px 0 0 12px; /* 左侧圆角 */
+  font-size: 0.9rem;
+  color: #f9fafb;
+}
+
+/* 第二列：居中显示（常用于年份/组别） */
+.competition-row td:nth-child(2) {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #d1d5db;
+  min-width: 70px; /* 保证列宽 */
+}
+
+/* 最后一列：右对齐 + 右圆角（常用于奖项/排名） */
+.competition-row td:last-child {
+  border-right: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 0 12px 12px 0; /* 右侧圆角 */
+  text-align: left;
+  font-weight: 600;
+  min-width: 140px;
+}
+
+/* 奖项颜色（本来是金/银/铜等） */
+.award-gold {
+  color: #fbbf24;
+  font-weight: 700;
+}
+.award-silver {
+  color: #e5e7eb;
+  font-weight: 700;
+}
+.award-bronze {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.award-first {
+  color: #fbbf24;
+  font-weight: 700;
+}
+.award-second {
+  color: #e5e7eb;
+  font-weight: 700;
+}
+.award-third {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+/* ===========================
+   项目时间线（Project Timeline）
+   =========================== */
+.project-timeline {
+  position: relative;  /* 给伪元素 ::before 定位参照 */
+  padding-left: 30px;  /* 左侧留出时间线轴空间 */
+}
+
+/* 左侧竖线：渐变色时间线轴 */
+.project-timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;             /* 贴左 */
+  top: 0;
+  bottom: 0;           /* 从顶部到到底部 */
+  width: 2px;
+  background: linear-gradient(180deg, #22d3ee, #a855f7, #f97316);
+  /* 纵向渐变：青 -> 紫 -> 橙，增强科技感 */
+}
+
+/* 每个项目节点 */
+.project-item {
+  position: relative;
+  margin-bottom: 30px;
+}
+
+/* 节点圆点：与时间线对齐 */
+.project-item::before {
+  content: '';
+  position: absolute;
+  left: -36px;         /* 向左移动，让圆点落在轴线上 */
+  top: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22d3ee; /* 圆点颜色 */
+  border: 3px solid var(--bg); /* 外圈“挖空”效果，融入背景 */
+  box-shadow: 0 0 0 2px #22d3ee; /* 外发光描边 */
+}
+
+/* 项目卡片主体 */
+.project-card {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.9));
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+}
+
+/* 项目头：标题 + 角色标签 */
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.project-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  flex: 1;
+}
+
+/* 角色胶囊：青紫渐变背景强调身份 */
+.project-role {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, rgba(34, 211, 238, 0.2), rgba(168, 85, 247, 0.2));
+  border: 1px solid rgba(34, 211, 238, 0.6);
+  color: #22d3ee;
+  white-space: nowrap;
+}
+
+.project-time {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  margin-bottom: 12px;
+}
+
+/* 项目描述列表 */
+.project-desc ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.project-desc li {
+  margin-top: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+/* 项目描述项前的符号 */
+.project-desc li::before {
+  content: "◆";
+  font-size: 0.6rem;
+  margin-top: 6px;
+  color: #22d3ee;
+  flex-shrink: 0;
+}
+
+/* 项目亮点：浅青色背景 + 左侧强调线 */
+.project-highlight {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(34, 211, 238, 0.1);
+  border-left: 3px solid #22d3ee;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #bfdbfe;
+}
+
+/* ===========================
+   统计数字（Stats）
+   =========================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  /* auto-fit：根据容器自动适配列数
+     minmax(180px, 1fr)：每列最小 180px，剩余空间均分
+  */
+  gap: 16px;
+}
+
+.stat-box {
+  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.32), transparent 70%),
+              rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(59, 130, 246, 0.7);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-align: center; /* 数字和标签居中 */
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #bfdbfe;
+}
+
+.stat-note {
+  font-size: 0.75rem;
+  color: var(--text-soft);
+  margin-top: 4px;
+}
+
+/* ===========================
+   开源贡献卡片（Contribution）
+   =========================== */
+.contribution-card {
+  background: radial-gradient(circle at top left, rgba(124, 58, 237, 0.26), transparent 60%),
+              radial-gradient(circle at bottom right, rgba(34, 197, 235, 0.26), transparent 60%),
+              var(--card);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  border: 1px solid rgba(129, 140, 248, 0.7); /* 偏紫蓝边框 */
+  box-shadow: 0 16px 42px rgba(15, 23, 42, 0.95);
+}
+
+/* 徽章行：可换行排列 */
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* 徽章基础样式 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;             /* 图标与文字间距 */
+  padding: 8px 14px;
+  border-radius: 999px; /* 胶囊 */
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Kaggle 徽章 */
+.badge-kaggle {
+  background: linear-gradient(120deg, rgba(32, 190, 255, 0.2), rgba(32, 190, 255, 0.1));
+  border: 1px solid rgba(32, 190, 255, 0.6);
+  color: #20BEFF;
+}
+
+/* 金/银/铜 徽章 */
+.badge-gold {
+  background: linear-gradient(120deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.1));
+  border: 1px solid rgba(251, 191, 36, 0.6);
+  color: #fbbf24;
+}
+.badge-silver {
+  background: linear-gradient(120deg, rgba(192, 192, 192, 0.2), rgba(192, 192, 192, 0.1));
+  border: 1px solid rgba(192, 192, 192, 0.6);
+  color: #c0c0c0;
+}
+.badge-bronze {
+  background: linear-gradient(120deg, rgba(205, 127, 50, 0.2), rgba(205, 127, 50, 0.1));
+  border: 1px solid rgba(205, 127, 50, 0.6);
+  color: #cd7f32;
+}
+
+/* 平台统计：自适应网格 */
+.platform-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+/* 单个平台统计块 */
+.platform-box {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.platform-name {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  margin-bottom: 8px;
+}
+
+.platform-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: white;
+}
+
+/* ===========================
+   页脚（Footer）
+   =========================== */
+.footer {
+  margin-top: 60px; /* 与上方内容拉开距离 */
+  padding-top: 30px;
+  border-top: 1px solid rgba(148, 163, 184, 0.3); /* 顶部分隔线 */
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+/* ===========================
+   竞赛表格：全部文字改为金色（强制覆盖）
+   =========================== */
+/* 这里使用更高优先级选择器 + !important 来强制把表格行内所有文字变成金色
+   - 覆盖 td 本身、伪类选中列、span、以及任何子元素 (*)
+   - text-shadow 增加一点发光质感
+*/
+.competition-table .competition-row td,
+.competition-table .competition-row td:first-child,
+.competition-table .competition-row td:nth-child(2),
+.competition-table .competition-row td:last-child,
+.competition-table .competition-row td span,
+.competition-table .competition-row td * {
+  color: var(--gold) !important; /* 强制金色：#fbbf24 */
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.25); /* 金色柔光阴影 */
+}
+
+/* 覆盖原本奖项颜色（保险）
+   如果某些地方仍使用 award-* 类名，也统一强制金色
+*/
+.award-gold,
+.award-silver,
+.award-bronze,
+.award-first,
+.award-second,
+.award-third {
+  color: var(--gold) !important;
+}
+
+
+/* 让竞赛奖项部分的三列按指定的比例分配宽度 */
+.competition-table{
+  table-layout: fixed; /* 关键：按列宽分配，而不是按内容撑开 */
+  width: 100%;
+}
+
+/* 第1列：比赛名称（占大头） */
+.competition-table td:nth-child(1){
+  width: 65%;
+  /* 可选：让超长内容更友好 */
+  word-break: break-word;     /* 英文长串也能断行 */
+  overflow-wrap: anywhere;    /* 更积极的断行策略 */
+}
+
+/* 第2列：等级 */
+.competition-table td:nth-child(2){
+  width: 10%;
+}
+
+/* 第3列：奖项 */
+.competition-table td:nth-child(3){
+  width: 25%;
+}
+
+/* 竞赛表格：三列全部左对齐（覆盖原来最后一列 right） */
+.competition-table .competition-row td{
+  text-align: left !important;
+}
+
+
+</style>
+
+
+
+
+
+
+
+<div id="profile-container">
+  <!-- 背景光球 -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="inner">
+
+    <!-- ==================== 头部 ==================== -->
+    <header class="header animate">
+      <div class="header-banner"></div>
+      <div class="header-content">
+        <h1 class="name">
+          <span class="name-cn">Jiahao Liu</span>
+        </h1>
+        <p class="subtitle">
+          湖南大学（985）      人工智能与机器人学院      自动化专业（学科评级A-） <br>
+        </p>
+        <div class="contact-info">
+          <div class="contact-item">
+            <span>📅</span>
+            <span>2005.07.18</span>
+          </div>
+          <div class="contact-item">
+            <span>🎖️</span>
+            <span>共青团员</span>
+          </div>
+          <div class="contact-item">
+            <span>📱</span>
+            <span>13780191655</span>
+          </div>
+          <div class="contact-item">
+            <span>📧</span>
+            <span>ljh5201314@hnu.edu.cn</span>
+          </div>
+        </div>
+        <div class="tags">
+          <span class="tag tag-gold">🏆 国家奖学金（3%）</span>
+          <span class="tag tag-gold">💡 思源电气奖学金（1%）</span>
+          <span class="tag">⭐ 校优秀学生（5%，2次）</span>
+          <span class="tag">🌐 Kaggle Competitions Expert</span>
+          <span class="tag">🌐 Kaggle Notebooks Expert</span>
+        </div>
+      </div>
+    </header>
+
+
+
+
+    
+
+    <!-- ==================== 1. 教育背景 ==================== -->
+    <section class="section animate">
+      <div class="section-header">
+        <div class="section-label">01. 教育背景</div>
+        <h2 class="section-title">
+          <span>Education</span> Background
+        </h2>
+      </div>
+
+      <div class="grid-2">
+        <!-- 学业成绩&英语水平 -->
+        <div class="card">
+          <div class="card-header">
+            <h3 style="font-size: 1.3rem; margin-bottom: 16px; color: white;">学业成绩 & 英语水平</h3>
+            <span class="card-tag">2023-2026</span>
+          </div>
+          <div class="info-box">
+            <div class="info-row">
+              <span class="info-label">核心课加权成绩</span>
+              <span class="info-value">91.25 <span class="info-highlight">(排名14/147)</span></span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">平均学分绩点</span>
+              <span class="info-value">3.83/4.0 <span class="info-highlight">(排名3/147)</span></span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">全部课程加权成绩</span>
+              <span class="info-value">90.71 <span class="info-highlight">(排名4/147)</span></span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">CET4</span>
+              <span class="info-value">564</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">CET6</span>
+              <span class="info-value">520</span>
+            </div>
+            <div class="info-row">
+              曾获BETT杯英语写作大赛全国一等奖（5%）
+            </div>
+          </div>
+        </div>
+
+        
+
+        <!-- 核心课程 -->
+        <div class="card">
+          <div class="card-header">
+            <h3 style="font-size: 1.3rem; margin-bottom: 16px; color: white;">核心课程</h3>
+            <span class="card-tag">专业课</span>
+          </div>
+          <div class="course-list">
+            <div class="course-item">
+              <div class="course-name">高等数学A2</div>
+              <div class="course-score">100</div>
+            </div>
+            <div class="course-item">
+              <div class="course-name">数字电子技术基础</div>
+              <div class="course-score">95</div>
+            </div>
+            <div class="course-item">
+              <div class="course-name">电路</div>
+              <div class="course-score">93</div>
+            </div>
+            <div class="course-item">
+              <div class="course-name">电力电子技术</div>
+              <div class="course-score">92</div>
+            </div>
+            <div class="course-item">
+              <div class="course-name">模式识别与机器学习</div>
+              <div class="course-score">91</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
+    
+
+    <!-- ==================== 2. 竞赛奖项 ==================== -->
+    <section class="section animate">
+      <div class="section-header">
+        <div class="section-label">02. 竞赛奖项</div>
+        <h2 class="section-title">
+          <span>Competition</span> Awards
+        </h2>
+      </div>
+
+      <table class="competition-table">
+        <tbody>
+          <tr class="competition-row">
+            <td>中国机器人大赛暨RoboCup机器人世界杯中国赛-地面清洁机器人</td>
+            <td>国家级</td>
+            <td><span class="award-first">一等奖，季军</span></td>
+          </tr>
+          <tr class="competition-row">
+            <td>中国机器人大赛暨RoboCup机器人世界杯中国赛专项赛-视觉挑战赛</td>
+            <td>国家级</td>
+            <td><span class="award-second">二等奖</span></td>
+          </tr>
+          <tr class="competition-row">
+            <td>中国机器人大赛暨RoboCup机器人世界杯中国赛-视觉挑战赛总决赛</td>
+            <td>国家级</td>
+            <td><span class="award-third">三等奖</span></td>
+          </tr>
+          <tr class="competition-row">
+            <td>中国智能机器人格斗及竞技大赛-地面清洁机器人</td>
+            <td>国家级</td>
+            <td><span class="award-second">二等奖</span></td>
+          </tr>
+          <tr class="competition-row">
+            <td>Kaggle: MAP - Charting Student Math Misunderstandings</td>
+            <td>国家级</td>
+            <td><span class="award-silver">Silver, Top 3.6%</span></td>
+          </tr>
+          <tr class="competition-row">
+            <td>Kaggle: ARC Prize 2025</td>
+            <td>国家级</td>
+            <td><span class="award-silver">Silver, Top 3.8%, 单人</span></td>
+          </tr>
+          <tr class="competition-row">
+            <td>Kaggle: Santa 2025 - Christmas Tree Packing Challenge</td>
+            <td>国家级</td>
+            <td><span class="award-bronze">Bronze, Top 7.0%, 单人</span></td>
+          </tr>
+          <tr class="competition-row">
+            <td>Kaggle: PhysioNet - Digitization of ECG Images</td>
+            <td>国家级</td>
+            <td><span class="award-bronze">Bronze, Top 8.5%, 单人</span></td>
+          </tr>
+          <tr class="competition-row">
+            <td>全球校园人工智能算法精英大赛-算法创新赛</td>
+            <td>国家级</td>
+            <td><span class="award-third">三等奖，队长</span></td>
+          </tr>
+          <tr class="competition-row">
+            <td>全球校园人工智能算法精英大赛-算法主题赛</td>
+            <td>国家级</td>
+            <td><span class="award-third">三等奖，队长</span></td>
+          </tr>
+          <tr class="competition-row">
+            <td>美国大学生数学建模竞赛</td>
+            <td>国家级</td>
+            <td><span class="award-third">H奖，队长</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+
+    
+
+    <!-- ==================== 3. 项目经历 ==================== -->
+    <section class="section animate">
+      <div class="section-header">
+        <div class="section-label">03. 项目经历</div>
+        <h2 class="section-title">
+          <span>Project</span> Experience
+        </h2>
+      </div>
+
+      <div class="project-timeline">
+        <!-- 项目1 -->
+        <div class="project-item">
+          <div class="project-card">
+            <div class="project-header">
+              <h3 style="font-size: 1.3rem; margin-bottom: 16px; color: white;">一种融合舌象、心率及文本的多模态健康状态评估方法</h3>
+              <span class="project-role">负责人</span>
+            </div>
+            <div class="project-time">2025.03 - 2025.12</div>
+            <div class="project-desc">
+              <ul>
+                <li>对比RT-DETR、YOLOv8与YOLOv5三种模型用于提取舌体ROI，权衡精度与速度，最终选用YOLOv8，mAP50为0.96，mAP50-95为0.72</li>
+                <li>将ResNet18作为backbone与ViT融合，并通过Dropout缓解过拟合，训练初始舌苔分类模型，F1得分达0.98，相较单独的ResNet18与ViT提高约0.02，收敛所需迭代轮次减小约5倍</li>
+                <li>对比DCGAN等模型后选用VAE生成舌苔图像。基于初始舌苔分类模型，经伪标签法与人工二次确认，用生成图像扩充训练集。对初始模型进行剪枝、微调与蒸馏后F1为0.97，参数量下降约30%</li>
+                <li>通过级联分类器定位人脸，利用欧拉视频放大算法实现非接触式心率测量，静息误差约15BPM。事后引入BiGRU神经网络，基于3σ原则检测心率异常</li>
+                <li>考虑到数据集规模较小，放弃进行LoRA微调。将数据集注入提示词，输入既往病史等文本信息，在提示词中将其与舌象分类结果等结合，调用大模型API评估健康状态</li>
+                <li>通过Visio绘制流程图，利用LaTeX撰写一万余字专利交底书</li>
+              </ul>
+              <div class="project-highlight">
+                <strong>成果：</strong>作为第一作者获得1项软件著作权，1项在投发明专利（实审中）
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 项目2 -->
+        <div class="project-item">
+          <div class="project-card">
+            <div class="project-header">
+              <h3 style="font-size: 1.3rem; margin-bottom: 16px; color: white;">一种嵌入式婴幼儿眼部追踪与健康监测云台</h3>
+              <span class="project-role">负责人</span>
+            </div>
+            <div class="project-time">2025.02 - 2025.10</div>
+            <div class="project-desc">
+              <ul>
+                <li>标注2000余图像，对比Dlib、SVM等模型，选用YOLOv8检测婴幼儿眨眼，mAP50为0.95，在应对斜躺等姿态时具有较好检测效果</li>
+                <li>组装舵机云台，将算法部署到K230视觉模块，引入卡尔曼滤波追踪婴幼儿眼部，FPS约为15</li>
+                <li>合作使用SolidWorks设计云台的保护与调节结构。与皮肤病病灶分割等项目整合后获得AIC全国三等奖</li>
+              </ul>
+              <div class="project-highlight">
+                <strong>成果：</strong>作为第一作者获得1项软件著作权，1项在投实用新型专利（已受理）。作为核心成员获得国家级大创立项
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 项目3 -->
+        <div class="project-item">
+          <div class="project-card">
+            <div class="project-header">
+              <h3 style="font-size: 1.3rem; margin-bottom: 16px; color: white;">中国机器人大赛-地面清洁机器人</h3>
+              <span class="project-role">核心成员</span>
+            </div>
+            <div class="project-time">2024.03 - 2024.11</div>
+            <div class="project-desc">
+              <ul>
+                <li>为应对光照、杂物等干扰因素，放弃使用传统的Canny边缘检测。现场采集数据，训练ResNet18判断图像中是否含有菠萝、火龙果等水果，并通过迁移学习缓解样本少的问题</li>
+                <li>对含水果的图像，拍照记录，同时通过地面网格线判断其是否紧靠机器人，用ORB与已记录图像对比，减少重复拍照。同时通过话题通信向路径规划文件发送识别结果，当水果紧靠机器人时改变目标点位完成避障</li>
+                <li>加入目标点位停顿策略，简单有效地处理运动模糊问题。通过按键启动、简化目标点位等方法，使机器完成任务耗时减少约20%，领先第四名近30秒</li>
+                <li>利用LaTeX排版10余页机器人技术报告，包括视觉实现、使用硬件、比赛策略等</li>
+              </ul>
+              <div class="project-highlight">
+                <strong>成果：</strong>满分完成任务，以季军的成绩获得中国机器人大赛全国一等奖。在赛后加入垃圾分类等功能，获得中国智能机器人格斗及竞技大赛全国二等奖
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    
+
+    <!-- ==================== 4. 开源贡献 ==================== -->
+    <section class="section animate">
+      <div class="section-header">
+        <div class="section-label">04. 开源贡献</div>
+        <h2 class="section-title">
+          <span>Open Source</span> Contribution
+        </h2>
+      </div>
+
+      <div class="contribution-card">
+        <h3 style="font-size: 1.3rem; margin-bottom: 16px; color: white;">Kaggle & 技术社区</h3>
+        <p style="color: var(--text-soft); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+          活跃于Kaggle平台，在参与竞赛的同时开源高分方案，累计收获6枚笔记本奖牌，获得<strong style="color: #20BEFF;">Notebooks Expert</strong>称号，历史最高排名进入全球前1%。
+          开源notebooks累计获得300+ upvotes，400+ forks
+        </p>
+
+        <p style="color: var(--text-soft); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+          通过网盘分享美国大学生数学建模资料，包括常用代码等，累计获得1000+浏览量。作为<strong style="color: #20BEFF;">Student Advisor</strong>指导一个初学者队伍参加2026年美国大学生数学建模竞赛，预计获得H奖
+        </p>
+
+        <p style="color: var(--text-soft); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+          将美赛资料与一些学习笔记同步分享至CSDN社区，累计获得8000+浏览量，100余点赞
+        </p>
+
+        <div class="badge-row">
+          <div class="badge badge-kaggle">
+            <span>🏅</span>
+            <span>Notebooks Expert</span>
+          </div>
+          <div class="badge badge-gold">
+            <span>🥇</span>
+            <span>1枚金牌</span>
+          </div>
+          <div class="badge badge-silver">
+            <span>🥈</span>
+            <span>2枚银牌</span>
+          </div>
+          <div class="badge badge-bronze">
+            <span>🥉</span>
+            <span>3枚铜牌</span>
+          </div>
+          <div class="badge badge-kaggle">
+            <span>🏅</span>
+            <span>MCM Student Advisor</span>
+          </div>
+        </div>
+        
+
+        <div class="platform-stats">
+          <div class="platform-box">
+            <div class="platform-name">Kaggle历史最高排名</div>
+            <div class="platform-value">Top 1%</div>
+          </div>
+          <div class="platform-box">
+            <div class="platform-name">获得Notebooks奖牌</div>
+            <div class="platform-value">6枚</div>
+          </div>
+          <div class="platform-box">
+            <div class="platform-name">CSDN浏览量</div>
+            <div class="platform-value">8000+</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; padding: 16px; background: rgba(34, 211, 238, 0.1); border-left: 3px solid #22d3ee; border-radius: 8px;">
+          <p style="color: #bfdbfe; font-size: 0.9rem; margin: 0;">
+            <strong>熟悉：</strong>Python，OpenCV，PyTorch，LaTeX，Visio，Multisim，……
+          </p>
+          <p style="color: #bfdbfe; font-size: 0.9rem; margin: 0;">
+            <strong>掌握：</strong>MATLAB，C，C++，传统ML，LoRA，AutoCAD，SolidWorks，ROS，……
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <p>2026年2月</p>
+      <p>有没有老师愿意收我做研究生orz</p>
+    </footer>
+
+  </div>
+</div>
+
+<script>
+// 滚动动画
+(function() {
+  var animated = document.querySelectorAll(".animate, .stat-number");
+  if (!("IntersectionObserver" in window)) {
+    animated.forEach(function(el) {
+      el.classList.add("visible");
+      if (el.dataset.count) animateCount(el);
+    });
+    return;
+  }
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        if (entry.target.dataset.count && !entry.target.dataset.started) {
+          entry.target.dataset.started = "1";
+          animateCount(entry.target);
+        }
+      }
+    });
+  }, { threshold: 0.2 });
+
+  animated.forEach(function(el) {
+    observer.observe(el);
+  });
+
+  function animateCount(el) {
+    var target = parseInt(el.dataset.count || "0", 10);
+    if (!target || isNaN(target)) return;
+
+    var start = 0;
+    var duration = 1200;
+    var startTime = performance.now();
+
+    function frame(now) {
+      var progress = Math.min((now - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var value = Math.floor(start + (target - start) * eased);
+      el.textContent = value;
+      if (progress < 1) {
+        requestAnimationFrame(frame);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+
